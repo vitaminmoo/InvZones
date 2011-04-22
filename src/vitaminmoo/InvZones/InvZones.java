@@ -1,7 +1,7 @@
 package vitaminmoo.InvZones;
 
 import java.io.*;
-import java.util.HashMap;
+import java.util.*;
 import java.util.logging.Logger;
 
 import org.bukkit.World;
@@ -27,6 +27,8 @@ public class InvZones extends JavaPlugin {
 
     private static String clearedMsg = "Your inventory has been cleared";
 
+    private static HashMap<String, ArrayList<String>> zonesMap = new HashMap<String, ArrayList<String>>();
+
     private static Logger log;
     private Configuration config;
 
@@ -48,7 +50,6 @@ public class InvZones extends JavaPlugin {
         dataFolder = this.getDataFolder();
 
         pm.registerEvent(Event.Type.PLAYER_TELEPORT, playerListener, Priority.Normal, this);
-
     }
 
     public void reloadConfig() {
@@ -75,7 +76,7 @@ public class InvZones extends JavaPlugin {
         p.getInventory().setLeggings(null);
     }
 
-    // create a hash from
+    // create a hash from an itemstack
     private static HashMap<String, Object> makeInvEntry(ItemStack i){
         HashMap<String, Object> invEntry = new HashMap<String, Object>();
 
@@ -88,6 +89,7 @@ public class InvZones extends JavaPlugin {
         else return null;
     }
 
+    // serialize inventory to file
     public static void saveInventory(Player p, World w){
         try {
             PlayerInventory inv = p.getInventory();
@@ -128,6 +130,7 @@ public class InvZones extends JavaPlugin {
         }
     }
 
+    // make an itemstack from a hash
     private static ItemStack makeItemStack(HashMap<String, Object> entry){
 
         try{
@@ -148,6 +151,7 @@ public class InvZones extends JavaPlugin {
         }
     }
 
+    // deserialize inventory from file
     @SuppressWarnings("unchecked")
     public static void loadInventory(Player p, World w){
         try {
