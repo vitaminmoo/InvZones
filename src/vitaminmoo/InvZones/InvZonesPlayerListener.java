@@ -2,7 +2,6 @@ package vitaminmoo.InvZones;
 
 //import java.util.logging.Logger;
 
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerTeleportEvent;
@@ -22,16 +21,16 @@ public class InvZonesPlayerListener extends PlayerListener {
         public void onPlayerTeleport(PlayerTeleportEvent event) {
 //            Logger log = Logger.getLogger("Minecraft");
             Player player = event.getPlayer();
-            World fromWorld = event.getFrom().getWorld();
-            World toWorld = event.getTo().getWorld();
+            String fromZone = InvZones.getWorldZone((event.getFrom().getWorld().getName()));
+            String toZone = InvZones.getWorldZone((event.getTo().getWorld().getName()));
 
             //log.info(player.getName() + " teleported from " + fromWorld.getName() + " to " + toWorld.getName());
 
-            // if the player teleported between worlds, then switch inventories
-            if(!fromWorld.getName().equalsIgnoreCase(toWorld.getName())){
-                InvZones.saveInventory(player, fromWorld);
+            // if the player teleported between zones, then switch inventories
+            if(!fromZone.equalsIgnoreCase(toZone)){
+                InvZones.saveInventory(player, fromZone);
                 InvZones.clearInventory(player);
-                InvZones.loadInventory(player, toWorld);
+                InvZones.loadInventory(player, toZone);
             }
         }
 }
