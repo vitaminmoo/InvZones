@@ -24,7 +24,8 @@ import org.yaml.snakeyaml.Yaml;
 public class InvZones extends JavaPlugin {
     private final InvZonesPlayerListener playerListener = new InvZonesPlayerListener(this);
 
-    private static String clearedMsg = "Your inventory has been cleared";
+    public static String leavingMsg = "§fLeaving zone §c%z§f. Inventory saved.";
+    public static String enteringMsg = "§fEntering zone §a%z§f. Inventory loaded.";
 
     private static HashMap<String, String> WorldsToZonesMap = new HashMap<String, String>();
 
@@ -34,8 +35,6 @@ public class InvZones extends JavaPlugin {
     private static File dataFolder;
 
     public void onEnable() {
-        WorldsToZonesMap.put("world", "default");
-
         config = this.getConfiguration();
         log = Logger.getLogger("Minecraft");
 
@@ -55,7 +54,8 @@ public class InvZones extends JavaPlugin {
     @SuppressWarnings("unchecked")
 	public static void reloadConfig() {
         config.load();
-        clearedMsg = config.getString("cleared-message", clearedMsg);
+        leavingMsg = config.getString("leaving-message", leavingMsg);
+        enteringMsg = config.getString("entering-message", enteringMsg);
 
         WorldsToZonesMap = (HashMap<String, String>)config.getProperty("worlds");
         if(WorldsToZonesMap == null){
@@ -68,7 +68,8 @@ public class InvZones extends JavaPlugin {
         saveConfig();
     }
     public static void saveConfig() {
-        config.setProperty("cleared-message", clearedMsg);
+        config.setProperty("leaving-message", leavingMsg);
+        config.setProperty("entering-message", enteringMsg);
         config.setProperty("worlds", WorldsToZonesMap);
         config.save();
     }
@@ -135,6 +136,9 @@ public class InvZones extends JavaPlugin {
             out.write(yaml.dump(invList));
             out.close();
             fos.close();
+            
+            // tell the player what happened
+            player.sendMessage(leavingMsg.replaceAll("%z", zone));
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -195,7 +199,8 @@ public class InvZones extends JavaPlugin {
                     }
                 }
 
-
+                // tell the player what happened
+                player.sendMessage(enteringMsg.replaceAll("%z", zone));
             }
         } catch (Exception e) {
             // TODO Auto-generated catch block
