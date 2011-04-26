@@ -31,6 +31,6 @@ Configuration
 * `worlds` -- A list of worlds and their zones in world: zone format. This will be automatically updated to include new worlds, with them set in the default zone.
 
 
-### inv-<username>-<zone>.yml
+### inv-$username-$zone.yml
 
 These files are the storage location for saved inventories. I do not recommend modifying these files directly.
