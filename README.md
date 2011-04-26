@@ -13,8 +13,7 @@ This code is in active use on the mc.obsoleet.org minecraft server, however, if 
 Requirements
 ------------
 
-This code has been tested on the following craftbukkit builds:
-* 0 - do some testing
+This code should be run on craftbukkit build 000FIXME.
 
 Other than craftbukkit, you will need some other plugin to allow users to teleport between worlds.
 
