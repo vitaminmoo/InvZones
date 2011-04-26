@@ -4,7 +4,6 @@ import java.io.*;
 import java.util.*;
 import java.util.logging.Logger;
 
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
@@ -25,17 +24,17 @@ import org.yaml.snakeyaml.Yaml;
 public class InvZones extends JavaPlugin {
     private final InvZonesPlayerListener playerListener = new InvZonesPlayerListener(this);
 
-    private static String clearedMsg = "Your inventory has been cleared";
+    public static String leavingMsg = "§fLeaving zone §c%z§f. Inventory saved.";
+    public static String enteringMsg = "§fEntering zone §a%z§f. Inventory loaded.";
 
-    private static HashMap<String, ArrayList<String>> zonesMap = new HashMap<String, ArrayList<String>>();
+    private static HashMap<String, String> WorldsToZonesMap = new HashMap<String, String>();
 
     private static Logger log;
-    private Configuration config;
+    private static Configuration config;
 
     private static File dataFolder;
 
     public void onEnable() {
-
         config = this.getConfiguration();
         log = Logger.getLogger("Minecraft");
 
@@ -45,20 +44,33 @@ public class InvZones extends JavaPlugin {
         PluginDescriptionFile pdfFile = this.getDescription();
         log.info( pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled!" );
 
-        this.reloadConfig();
+        reloadConfig();
 
         dataFolder = this.getDataFolder();
 
         pm.registerEvent(Event.Type.PLAYER_TELEPORT, playerListener, Priority.Normal, this);
     }
 
-    public void reloadConfig() {
+    @SuppressWarnings("unchecked")
+	public static void reloadConfig() {
         config.load();
-        clearedMsg = config.getString("cleared-message", clearedMsg);
+        leavingMsg = config.getString("leaving-message", leavingMsg);
+        enteringMsg = config.getString("entering-message", enteringMsg);
+
+        WorldsToZonesMap = (HashMap<String, String>)config.getProperty("worlds");
+        if(WorldsToZonesMap == null){
+        	WorldsToZonesMap = new HashMap<String, String>();
+        	WorldsToZonesMap.put("world", "default");
+        }
+        else if(WorldsToZonesMap.size() == 0)
+        	WorldsToZonesMap.put("world", "default");
+        
         saveConfig();
     }
-    public void saveConfig() {
-        config.setProperty("cleared-message", clearedMsg);
+    public static void saveConfig() {
+        config.setProperty("leaving-message", leavingMsg);
+        config.setProperty("entering-message", enteringMsg);
+        config.setProperty("worlds", WorldsToZonesMap);
         config.save();
     }
 
@@ -90,9 +102,9 @@ public class InvZones extends JavaPlugin {
     }
 
     // serialize inventory to file
-    public static void saveInventory(Player p, World w){
+    public static void saveInventory(Player player, String zone){
         try {
-            PlayerInventory inv = p.getInventory();
+            PlayerInventory inv = player.getInventory();
             ItemStack[] invContents = inv.getContents();
 
             // build an ArrayList from the inventory
@@ -118,12 +130,15 @@ public class InvZones extends JavaPlugin {
             }
 
             Yaml yaml = new Yaml();
-            File invFile = new File(dataFolder, "inv-" + p.getName() + "-" + w.getName() + ".yml");
+            File invFile = new File(dataFolder, "inv-" + player.getName().toLowerCase() + "-" + zone.toLowerCase() + ".yml");
             FileOutputStream fos = new FileOutputStream(invFile);
             OutputStreamWriter out = new OutputStreamWriter(fos);
             out.write(yaml.dump(invList));
             out.close();
             fos.close();
+            
+            // tell the player what happened
+            player.sendMessage(leavingMsg.replaceAll("%z", zone));
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -153,14 +168,14 @@ public class InvZones extends JavaPlugin {
 
     // deserialize inventory from file
     @SuppressWarnings("unchecked")
-    public static void loadInventory(Player p, World w){
+    public static void loadInventory(Player player, String zone){
         try {
             Yaml yaml = new Yaml();
-            File invFile = new File(dataFolder, "inv-" + p.getName() + "-" + w.getName() + ".yml");
+            File invFile = new File(dataFolder, "inv-" + player.getName().toLowerCase() + "-" + zone.toLowerCase() + ".yml");
             if (invFile.exists()){
                 FileInputStream fis = new FileInputStream(invFile);
                 HashMap<Integer, HashMap<String, Object>> invList = (HashMap<Integer, HashMap<String, Object>>)yaml.load(fis);
-                PlayerInventory inv = p.getInventory();
+                PlayerInventory inv = player.getInventory();
                 ItemStack is;
 
                 is = makeItemStack(invList.get(-1));
@@ -184,12 +199,21 @@ public class InvZones extends JavaPlugin {
                     }
                 }
 
-
+                // tell the player what happened
+                player.sendMessage(enteringMsg.replaceAll("%z", zone));
             }
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
-}
 
+	public static String getWorldZone(String world){
+		if(!WorldsToZonesMap.containsKey(world)){
+			WorldsToZonesMap.put(world, "default");
+			saveConfig();
+		}
+		
+		return WorldsToZonesMap.get(world);
+	}
+}
